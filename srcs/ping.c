@@ -6,7 +6,7 @@
 /*   By: jhalford <jack@crans.org>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/04/22 14:10:24 by jhalford          #+#    #+#             */
-/*   Updated: 2017/10/08 14:26:15 by jhalford         ###   ########.fr       */
+/*   Updated: 2017/10/08 14:35:02 by jhalford         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,9 +122,9 @@ int				main(int ac, char **av)
 	result = resolve_host(av[1]);
 	if (result->ai_canonname)
 		printf("PING %s (%s): %i data bytes\n",
-			result->ai_canonname, g_domain, 64);
+			result->ai_canonname, g_domain, PACKETSIZE);
 	else
-		printf("PING %s: %i data bytes\n", g_domain, 64);
+		printf("PING %s: %i data bytes\n", g_domain, PACKETSIZE);
 	if (fork() == 0)
 	{
 		signal(SIGINT, stats_recap);
