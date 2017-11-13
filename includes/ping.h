@@ -27,6 +27,27 @@
 
 # define PACKETSIZE	64
 
+typedef struct s_ping	t_ping;
+
+struct			s_ping
+{
+	pid_t			pid;
+	t_rs			rs;
+	int				pkt_sent;
+	int				pkt_recv;
+	int				sock;
+	struct addrinfo	*sa;
+	union
+	{
+		char		ip4[INET_ADDRSTRLEN];
+		char		ip6[INET6_ADDRSTRLEN];
+	}				ip;
+#define ip4			ip.ip4
+#define ip6			ip.ip6
+};
+
+extern t_ping		g_ping;
+
 struct			s_packet
 {
 	struct icmp	hdr;
