@@ -11,8 +11,7 @@
 /* ************************************************************************** */
 
 #include "ping.h"
-#define TIME_START		0
-#define TIME_END		1
+#define TIME_START		0 #define TIME_END		1
 #define TIME_TRIPTIME	2
 
 t_ping		g_ping =
@@ -22,14 +21,35 @@ t_ping		g_ping =
 	.pkt_recv = 0,
 };
 
-void		display(void *buf, int bytes, struct sockaddr_in *addr)
+int			resolve_host(char *node, t_ping *ping)
+{
+	struct addrinfo		*result;
+	struct addrinfo		hints;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags |= AI_CANONNAME;
+	if (getaddrinfo(node, NULL, &hints, &result) != 0)
+	{
+		perror("getaddrinfo");
+		exit(1);
+	}
+	ping->sa = result;
+	inet_ntop(AF_INET, &(((struct sockaddr_in*)ping->sa->ai_addr)->sin_addr), ping->ip4, INET_ADDRSTRLEN);
+	return (0);
+}
+
+
+void		display(void *buf, int bytes, struct sockaddr *addr)
 {
 	struct ip		*ip;
 	struct icmp		*icmp;
 	struct s_packet	*pkt;
 	int				hlen;
 	double			triptime;
-	char			strbuf[INET_ADDRSTRLEN];
+	char			hbuf[NI_MAXHOST];
+	char			ipbuf[INET_ADDRSTRLEN];
 
 	ip = buf;
 	(void)bytes;
@@ -41,10 +61,17 @@ void		display(void *buf, int bytes, struct sockaddr_in *addr)
 	triptime = time_milli() - *(double*)&pkt->msg;
 	rs_push(&g_ping.rs, triptime);
 	g_ping.pkt_recv++;
-	printf("%d bytes from %s: icmp_seq=%d ttl=%i time=%.3f ms\n",
-			ip->ip_len,
-			inet_ntop(AF_INET, &(addr->sin_addr), strbuf, INET_ADDRSTRLEN),
-			icmp->icmp_seq, ip->ip_ttl, triptime);
+
+	bzero(hbuf, NI_MAXHOST);
+	bzero(ipbuf, INET_ADDRSTRLEN);
+	getnameinfo(addr, sizeof(struct sockaddr_in), ipbuf, INET_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
+	if (getnameinfo(addr, sizeof(struct sockaddr_in), hbuf, NI_MAXHOST, NULL, 0, 0) == 0)
+		printf("%d bytes from %s (%s): icmp_seq=%d ttl=%i time=%.1f ms\n",
+				hlen, hbuf, ipbuf, icmp->icmp_seq, ip->ip_ttl, triptime);
+	else
+		printf("%d bytes from %s: icmp_seq=%d ttl=%i time=%.1f ms\n",
+				hlen, ipbuf, icmp->icmp_seq, ip->ip_ttl, triptime);
+
 }
 
 void		ping(int signo)
@@ -58,10 +85,11 @@ void		ping(int signo)
 	pkt.hdr.icmp_id = g_ping.pid;
 	pkt.hdr.icmp_seq = ++g_ping.pkt_sent;
 	epoch = time_milli();
-	ft_memcpy(pkt.msg, (void*)&epoch, sizeof(epoch));
+	ft_memcpy(pkt.msg, (void*)&epoch, sizeof(double));
 	pkt.hdr.icmp_cksum = cksum(&pkt, sizeof(pkt));
 	sendto(g_ping.sock, &pkt, sizeof(pkt), 0, g_ping.sa->ai_addr,
 			sizeof(struct sockaddr));
+	alarm(1);
 }
 
 void		stats_recap(int signo)
@@ -78,25 +106,6 @@ void		stats_recap(int signo)
 			g_ping.rs.min, g_ping.rs.avg, g_ping.rs.max, g_ping.rs.stdev);
 	freeaddrinfo(g_ping.sa);
 	exit(0);
-}
-
-int			resolve_host(char *hostname, t_ping *ping)
-{
-	struct addrinfo		*result;
-	struct addrinfo		hints;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags |= AI_CANONNAME;
-	if (getaddrinfo(hostname, NULL, &hints, &result) != 0)
-	{
-		perror("getaddrinfo");
-		exit(1);
-	}
-	ping->sa = result;
-	inet_ntop(AF_INET, &(((struct sockaddr_in*)ping->sa->ai_addr)->sin_addr), ping->ip4, INET_ADDRSTRLEN);
-	return (0);
 }
 
 int			main(int ac, char **av)
