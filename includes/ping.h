@@ -25,12 +25,11 @@
 # include <netinet/ip_icmp.h>
 # include <sys/wait.h>
 
-# define PACKETSIZE	64
-
 typedef struct s_ping	t_ping;
 
 struct			s_ping
 {
+	size_t			pkt_size;
 	pid_t			pid;
 	t_rs			rs;
 	int				pkt_sent;
@@ -47,11 +46,5 @@ struct			s_ping
 };
 
 extern t_ping		g_ping;
-
-struct			s_packet
-{
-	struct icmp	hdr;
-	char		msg[PACKETSIZE - sizeof(struct icmp)];
-};
 
 #endif
