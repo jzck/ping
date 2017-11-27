@@ -103,7 +103,7 @@ void		ping(int signo)
 	hdr->icmp_seq = ++g_ping.pkt_sent;
 	msg = (double*)(pkt + sizeof(struct icmp));
 	epoch = time_milli();
-	ft_memcpy(msg, (void*)&epoch, sizeof(double));
+	memcpy(msg, (void*)&epoch, sizeof(double));
 	hdr->icmp_cksum = cksum(&pkt, sizeof(pkt));
 	sendto(g_ping.sock, &pkt, sizeof(pkt), 0, g_ping.sa->ai_addr,
 			sizeof(struct sockaddr));
@@ -130,7 +130,7 @@ int			main(int ac, char **av)
 {
 	if (ac != 2)
 	{
-		ft_usage("%s <addr>\n", av[0]);
+		dprintf(2, "%s <addr>\n", av[0]);
 		exit(1);
 	}
 	resolve_host(av[1], &g_ping);
