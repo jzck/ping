@@ -10,8 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef LIBFT_RS_H
-# define LIBFT_RS_H
+#pragma once
 
 # include <strings.h>
 # include <float.h>
@@ -33,5 +32,3 @@ struct				s_rs {
 void					rs_init(t_rs *rs);
 void					rs_push(t_rs *rs, double n);
 void					rs_final(t_rs *rs);
-
-#endif

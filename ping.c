@@ -12,12 +12,27 @@
 
 #include "ping.h"
 
+#define PING_USAGE	"%s [-hv] [-t ttl] destination"
+
 t_ping		g_ping =
 {
 	.pid = -1,
 	.pkt_size = 56,
 	.pkt_sent = -1,
 	.pkt_recv = 0,
+	.ttl = 255,
+};
+
+int			get_ttl(char *arg, t_ping *data);
+
+t_cliopts	opts[] =
+{
+#define	FLAG_HELP		(1 << 0)
+#define	FLAG_VERBOSE	(1 << 1)
+#define	FLAG_TTL		(1 << 2)
+	{'h', NULL, FLAG_HELP, 0, NULL, 0},
+	{'v', NULL, FLAG_VERBOSE, 0, NULL, 0},
+	{'t', NULL, FLAG_TTL, 0, get_ttl, 1},
 };
 
 int			resolve_host(char *node, t_ping *ping)
@@ -126,14 +141,33 @@ void		stats_recap(int signo)
 	exit(0);
 }
 
+int			get_interval(char *arg, t_ping *data)
+{
+	data->interval = atof(arg);
+	return (0);
+}
+
+int			get_ttl(char *arg, t_ping *data)
+{
+	data->ttl = atoi(arg);
+	return (0);
+}
+
 int			main(int ac, char **av)
 {
-	if (ac != 2)
+	(void)ac;
+	if (cliopts_get(av, opts, &g_ping))
 	{
-		dprintf(2, "%s <addr>\n", av[0]);
+		ft_perror(av[0]);
+		ft_usage(PING_USAGE, av[0]);
 		exit(1);
 	}
-	resolve_host(av[1], &g_ping);
+	if (g_ping.flag & FLAG_HELP || !g_ping.av_data[0])
+	{
+		ft_usage(PING_USAGE, av[0]);
+		exit(!(g_ping.flag & FLAG_HELP));
+	}
+	resolve_host(g_ping.av_data[0], &g_ping);
 	if (g_ping.sa->ai_canonname)
 		printf("PING %s (%s): %zu(%zu) data bytes\n",
 				g_ping.sa->ai_canonname, g_ping.ip4,
@@ -146,7 +180,7 @@ int			main(int ac, char **av)
 		perror("socket");
 		exit(1);
 	}
-	if (setsockopt(g_ping.sock, 0, IP_TTL, (int[]){255}, sizeof(int)) != 0)
+	if (setsockopt(g_ping.sock, 0, IP_TTL, &g_ping.ttl, sizeof(g_ping.ttl)) != 0)
 	{
 		perror("setsockopt");
 		exit(1);

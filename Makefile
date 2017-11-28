@@ -17,7 +17,7 @@ NAME		=	ft_ping
 CC			=	gcc
 RM			=	rm -rf 2>&-
 W_FLAGS		=	-Wall -Wextra -Werror
-D_FLAGS		=
+D_FLAGS		=	-D _GNU_SOURCE
 FLAGS		=	$(W_FLAGS) $(D_FLAGS)
 
 LEN_NAME	=	`printf "%s" $(NAME) |wc -c`
@@ -30,9 +30,11 @@ OBJ_DIR		=	objs/
 SRC_BASE	=	\
 ping.c\
 create_client.c\
-epoch.c\
 cksum.c\
 rs.c\
+epoch.c\
+cliopts.c\
+error.c\
 
 SRCS		=	$(addprefix $(SRC_DIR), $(SRC_BASE))
 OBJS		=	$(addprefix $(OBJ_DIR), $(SRC_BASE:.c=.o))
@@ -43,10 +45,7 @@ all :
 	@make -j $(NAME)
 
 $(NAME):	$(OBJ_DIR) $(OBJS) $(CLIENT_OBJ)
-	$(CC) $(OBJS) -o $@ \
-		-I $(INC_DIR) \
-		$(CLIENT_OBJ) $(FLAGS) \
-		-lm
+	$(CC) $(OBJS) -o $@ -I $(INC_DIR) $(CLIENT_OBJ) $(FLAGS) -lm
 	# sudo setcap cap_net_raw+ep $@ 2>&-
 
 $(OBJ_DIR) :
